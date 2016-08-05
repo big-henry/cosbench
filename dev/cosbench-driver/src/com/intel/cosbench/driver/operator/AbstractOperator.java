@@ -114,6 +114,7 @@ abstract class AbstractOperator implements Operator {
     protected abstract void operate(int idx, int all, Session session);
     
     public static void errorStatisticsHandle(Exception e, Session session, String target){
+    	try {
     		String trace = e.getStackTrace()[0].toString();
     		trace = e.getCause() == null ? trace : trace + e.getCause().getStackTrace()[0].toString();
     		ErrorStatistics errorStatistics = session.getErrorStatistics();
@@ -127,6 +128,9 @@ abstract class AbstractOperator implements Operator {
     			String targets = stackTraceAndTargets.get(trace);
     			stackTraceAndTargets.put(trace, targets + ", "+target);
     		}
+    	} catch (Exception e1) {
+    		e1.printStackTrace();
+    	}
     }
     public static void isUnauthorizedException(Exception e, Session session) {
     	if(e != null && e.getMessage() != null)
@@ -135,7 +139,7 @@ abstract class AbstractOperator implements Operator {
     				session.getApi().setAuthFlag(false);
     				LOGGER.debug("catch 401 error from storage backend, set auth flag to false");
     			}
-    		}catch(NumberFormatException ne) {
+    		}catch(Exception ne) {
     			//ne.printStackTrace();// mask ignore
     		}
     }
