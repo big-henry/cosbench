@@ -284,12 +284,6 @@ class MissionHandler {
         LOGGER.debug("begin to execute mission {}", id);
         try {
             stressTarget();
-        } catch (TimeoutException te) {
-            /* no need to shutdown agents again */
-            boolean shutdownNow = false;
-            abortAgents(shutdownNow);
-//            missionContext.setState(ABORTED);
-            return;
         } catch (AbortedException ae) {
             /* have to shutdown agents now */
             boolean shutdownNow = true;
@@ -315,9 +309,14 @@ class MissionHandler {
         List<Agent> agents = createWorkAgents();
         Mission m = missionContext.getMission();
         int timeout = m.getRampup() + m.getRuntime() + m.getRampdown();
-        executeAgents(agents, timeout == 0 ? 0 : timeout + 60);
-        missionContext.setState(FINISHED);
-        missionContext.getErrorStatistics().summaryToMission(missionContext.getLogManager().getLogger());
+        try {
+        	executeAgents(agents, timeout == 0 ? 0 : timeout + 60);
+            missionContext.setState(FINISHED);
+            missionContext.getErrorStatistics().summaryToMission(missionContext.getLogManager().getLogger());
+        } catch (TimeoutException te) {
+            abortAgents(false);
+            missionContext.setState(FINISHED);
+        }
     }
 
     private List<Agent> createWorkAgents() {
